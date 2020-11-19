@@ -93,7 +93,6 @@ function sanitize_variables() {
     SYSTEMD_HOMED_STORAGE=$(sanitize_variable "$SYSTEMD_HOMED_STORAGE")
     BOOTLOADER=$(sanitize_variable "$BOOTLOADER")
     CUSTOM_SHELL=$(sanitize_variable "$CUSTOM_SHELL")
-    DESKTOP_ENVIRONMENT=$(sanitize_variable "$DESKTOP_ENVIRONMENT")
     DISPLAY_DRIVER=$(sanitize_variable "$DISPLAY_DRIVER")
     DISPLAY_DRIVER_HARDWARE_ACCELERATION_INTEL=$(sanitize_variable "$DISPLAY_DRIVER_HARDWARE_ACCELERATION_INTEL")
     PACKAGES_PACMAN=$(sanitize_variable "$PACKAGES_PACMAN")
@@ -162,7 +161,6 @@ function check_variables() {
     check_variables_list "BOOTLOADER" "$BOOTLOADER" "grub refind systemd"
     check_variables_list "CUSTOM_SHELL" "$CUSTOM_SHELL" "bash zsh dash fish"
     check_variables_list "AUR" "$AUR" "aurman yay" "false"
-    check_variables_list "DESKTOP_ENVIRONMENT" "$DESKTOP_ENVIRONMENT" "bspwm gnome kde xfce mate cinnamon lxde i3-wm i3-gaps" "false"
     check_variables_list "DISPLAY_DRIVER" "$DISPLAY_DRIVER" "intel amdgpu ati nvidia nvidia-lts nvidia-dkms nvidia-390xx nvidia-390xx-lts nvidia-390xx-dkms nouveau" "false"
     check_variables_boolean "KMS" "$KMS"
     check_variables_boolean "FASTBOOT" "$FASTBOOT"
@@ -1380,86 +1378,7 @@ function custom_shell_user() {
     fi
 }
 
-function desktop_environment() {
-    print_step "desktop_environment()"
 
-    case "$DESKTOP_ENVIRONMENT" in
-        "bspwm" )
-            desktop_environment_bspwm
-            ;;
-        "gnome" )
-            desktop_environment_gnome
-            ;;
-        "kde" )
-            desktop_environment_kde
-            ;;
-        "xfce" )
-            desktop_environment_xfce
-            ;;
-        "mate" )
-            desktop_environment_mate
-            ;;
-        "cinnamon" )
-            desktop_environment_cinnamon
-            ;;
-        "lxde" )
-            desktop_environment_lxde
-            ;;
-        "i3-wm" )
-            desktop_environment_i3_wm
-            ;;
-        "i3-gaps" )
-            desktop_environment_i3_gaps
-            ;;
-    esac
-
-    arch-chroot /mnt systemctl set-default graphical.target
-}
-
-function desktop_environment_bspwm() {
-    pacman_install "bspwm lightdm lightdm-gtk-greeter xorg-server xorg-xinit"
-    arch-chroot /mnt systemctl enable lightdm.service
-}
-
-function desktop_environment_gnome() {
-    pacman_install "gnome"
-    arch-chroot /mnt systemctl enable gdm.service
-}
-
-function desktop_environment_kde() {
-    pacman_install "plasma-meta plasma-wayland-session kde-applications-meta"
-    arch-chroot /mnt systemctl enable sddm.service
-}
-
-function desktop_environment_xfce() {
-    pacman_install "xfce4 xfce4-goodies lightdm lightdm-gtk-greeter xorg-server"
-    arch-chroot /mnt systemctl enable lightdm.service
-}
-
-function desktop_environment_mate() {
-    pacman_install "mate mate-extra lightdm lightdm-gtk-greeter xorg-server"
-    arch-chroot /mnt systemctl enable lightdm.service
-}
-
-function desktop_environment_cinnamon() {
-    pacman_install "cinnamon lightdm lightdm-gtk-greeter xorg-server"
-    arch-chroot /mnt systemctl enable lightdm.service
-}
-
-function desktop_environment_lxde() {
-    pacman_install "lxde lxdm"
-    arch-chroot /mnt systemctl enable lxdm.service
-}
-
-function desktop_environment_i3_wm() {
-    pacman_install "i3-wm i3blocks i3lock i3status dmenu rxvt-unicode lightdm lightdm-gtk-greeter xorg-server"
-    arch-chroot /mnt systemctl enable lightdm.service
-}
-
-function desktop_environment_i3_gaps() {
-    pacman_install "i3-gaps i3blocks i3lock i3status dmenu rxvt-unicode lightdm lightdm-gtk-greeter xorg-server"
-    arch-chroot /mnt systemctl enable lightdm.service
-}
 
 function packages() {
     print_step "packages()"
@@ -1656,7 +1575,7 @@ EOT
 }
 
 function main() {
-    ALL_STEPS=("configuration_install" "sanitize_variables" "check_variables" "warning" "init" "facts" "check_facts" "prepare" "partition" "install" "configuration" "mkinitcpio_configuration" "display_driver" "kernels" "mkinitcpio" "network" "virtualbox" "users" "bootloader" "custom_shell" "desktop_environment" "packages" "systemd_units" "terminate" "end")
+    ALL_STEPS=("configuration_install" "sanitize_variables" "check_variables" "warning" "init" "facts" "check_facts" "prepare" "partition" "install" "configuration" "mkinitcpio_configuration" "display_driver" "kernels" "mkinitcpio" "network" "virtualbox" "users" "bootloader" "custom_shell" "packages" "systemd_units" "terminate" "end")
     STEP="configuration_install"
 
     if [ -n "$1" ]; then
@@ -1706,9 +1625,7 @@ function main() {
     if [ -n "$CUSTOM_SHELL" ]; then
         execute_step "custom_shell" "${STEPS}"
     fi
-    if [ -n "$DESKTOP_ENVIRONMENT" ]; then
-        execute_step "desktop_environment" "${STEPS}"
-    fi
+
     execute_step "packages" "${STEPS}"
     execute_step "systemd_units" "${STEPS}"
     execute_step "terminate" "${STEPS}"
